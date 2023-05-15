@@ -1,7 +1,7 @@
 from .models import sales_data_AP
 from .serializer import AP_SalesSerializer,AP_MonthlySerializer,APpieSerializer,AP_ReginalManSerializer
 from django.http import JsonResponse
-
+import datetime
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.decorators import authentication_classes, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -109,6 +109,7 @@ def AP_pie(request):
 #             data_by_month[year][month] = {}
 #         data_by_month[year][month][business_executive] = total_sales
 #     return JsonResponse(data_by_month)
+#---------------------------------------MAN--------------------------------------------------------------------
 @api_view(['GET'])
 def AP_Managers(request):
     data={}
@@ -124,4 +125,21 @@ def AP_Managers(request):
         data['status'] ="error"
     return Response(data)       
 
-    
+#----------------------------MON & Year--------------------------------
+@api_view(['GET'])
+def AP_year_month(request):
+    data=[]
+    try:
+        year = request.GET.get('year',None)
+        month = request.GET.get('month',None)
+        month_number = datetime.datetime.strptime(month, '%B').month
+        queryset=sales_data_AP.objects.filter(Date__year = year ,Date__month = month_number).values('Business_executive').annotate(sales=Sum('Company_value'))
+        for item in queryset:
+            data.append({'Business_executive': item['Business_executive'], 'sales': item['sales']})
+        
+    except Exception as e:
+        data=[]
+        
+    return Response(data)    
+
+        
