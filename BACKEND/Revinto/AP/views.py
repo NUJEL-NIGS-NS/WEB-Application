@@ -1,7 +1,8 @@
-from .models import sales_data_AP
+from .models import sales_data_AP,AP_geolocation
 from .serializer import AP_SalesSerializer,AP_MonthlySerializer,APpieSerializer,AP_ReginalManSerializer
 from django.http import JsonResponse
 import datetime
+import json
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.decorators import authentication_classes, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -117,11 +118,11 @@ def AP_Managers(request):
         sales_data = sales_data_AP.objects.values('Regional_manager').distinct().order_by('Regional_manager')
 
 
-        print(sales_data)
+        # print(sales_data)
         serializer =AP_ReginalManSerializer(sales_data,many=True)
         data['status']=serializer.data
     except Exception as e:
-        print(e)
+        # print(e)
         data['status'] ="error"
     return Response(data)       
 
@@ -132,6 +133,7 @@ def AP_year_month(request):
     try:
         year = request.GET.get('year',None)
         month = request.GET.get('month',None)
+        
         month_number = datetime.datetime.strptime(month, '%B').month
         queryset=sales_data_AP.objects.filter(Date__year = year ,Date__month = month_number).values('Business_executive').annotate(sales=Sum('Company_value'))
         for item in queryset:
@@ -142,4 +144,46 @@ def AP_year_month(request):
         
     return Response(data)    
 
+
+#------------------------------------Unique----Products---------------------Ap-------------------------------\
+@api_view(['GET'])
+def AP_unique_pro(request):
+    data=[]
+    try:
+        year = request.GET.get('year',None)
+        month = request.GET.get('month',None)
+        if month == None or year == None:
+            qureyset = sales_data_AP.objects.values('Product').annotate(sales=Sum('Company_value'),TotalQty=Sum("Billed_qty")).values('Product',"TotalQty","sales").distinct().order_by('-TotalQty')
+        else:
+            month_number = datetime.datetime.strptime(month, '%B').month
+            qureyset = sales_data_AP.objects.filter(Date__year = year ,Date__month = month_number).values('Product').annotate(sales=Sum('Company_value'),TotalQty=Sum("Billed_qty")).values('Product',"TotalQty","sales").distinct().order_by('-TotalQty')
+        for i in qureyset:
+            data.append(i)
+    except Exception as e:
+        data=[]
         
+    return Response(data)           
+
+#----------------------------------------Map---Cordinates----------------     
+@api_view(['GET'])
+def AP_geolocation_view(request):
+    data={}
+    try:
+        queryset=AP_geolocation.objects.values("Name").distinct()
+        for item in queryset:
+            queryset2=AP_geolocation.objects.filter(Name =item['Name']).values('C_lat', 'C_lon', 'City', 'Designation', 'H_lat', 'H_lon', 'Head_quarters', 'P_lat', 'P_lon', 'Place', 'Type').distinct()
+            # data[item['Name']] = list(queryset2)
+            lis1=[]
+            for  i in queryset2:
+                lis={}
+                lis['City'] = i['City']
+                lis['cityGeo']=[i['C_lat'],i['C_lon']]
+                lis['Head_quarters']=i['Head_quarters']
+                lis['HqGeo']=[i['H_lat'],i['H_lon']]
+                lis['Place']=str(i['Place'])+" "+str(i['Type'])
+                lis['PlaceGeo']=[i['P_lat'],i['P_lon']]
+                lis1.append(lis)
+            data[item['Name']]=lis1
+    except Exception as e:
+        data=["error"]    
+    return Response(data)    

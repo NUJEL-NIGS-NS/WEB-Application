@@ -17,3 +17,22 @@ class sales_data_AP(models.Model):
 
     def __str__(self):
         return str(self.Date) + "  "+self.Business_executive
+
+
+class AP_geolocation(models.Model):
+    Designation =models.CharField(max_length=30)
+    Name = models.CharField(max_length=30)
+    Head_quarters = models.CharField(max_length=30)
+    Place = models.CharField(max_length=30)
+    City = models.CharField(max_length=30)
+    P_lat = models.DecimalField(max_digits=10,decimal_places=7) 
+    P_lon = models.DecimalField(max_digits=10,decimal_places=7)
+    C_lat = models.DecimalField(max_digits=10,decimal_places=7)
+    C_lon = models.DecimalField(max_digits=10,decimal_places=7)
+    H_lat =models.DecimalField(max_digits=10,decimal_places=7)
+    H_lon = models.DecimalField(max_digits=10,decimal_places=7)
+    Type =models.CharField(max_length=10)
+
+    def __str__(self):
+        return self.Name +" "+ self.Head_quarters
+    
