@@ -14,6 +14,7 @@ class sales_data_AP(models.Model):
     Billed_qty = models.IntegerField()
     Billed_rate = models.DecimalField(max_digits=100, decimal_places=2)
     Company_value = models.DecimalField(max_digits=100, decimal_places=2)
+    financial_year = models.IntegerField(default=2022)
 
     def __str__(self):
         return str(self.Date) + "  "+self.Business_executive
