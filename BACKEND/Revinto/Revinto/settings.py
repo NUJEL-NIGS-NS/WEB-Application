@@ -44,7 +44,11 @@ INSTALLED_APPS = [
 
     #myapps
     'account',
-    'AP'
+    'Master',
+    'AP',
+    'Orissa',
+    'Kerala',
+    'Karnataka',
 ]
 
 MIDDLEWARE = [

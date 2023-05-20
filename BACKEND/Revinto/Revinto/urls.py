@@ -20,6 +20,12 @@ from django.urls import path,include
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('a/', include('account.urls')),
+    path('mas/', include('Master.urls')),
     path('AP/', include('AP.urls')),
+    path('OS/', include('Orissa.urls')),
+    path('KA/', include('Karnataka.urls')),
+    path('KL/', include('Kerala.urls')),
+
+
 
 ]

@@ -1,6 +1,5 @@
-from .models import sales_data_AP, AP_geolocation
-from .serializer import AP_SalesSerializer, AP_MonthlySerializer, APpieSerializer, AP_ReginalManSerializer
-from django.http import JsonResponse
+from .models import sales_data_KL, KL_geolocation
+from .serializer import KL_SalesSerializer, KL_MonthlySerializer, KLpieSerializer, KL_ReginalManSerializer
 import datetime
 import json
 from rest_framework.authentication import TokenAuthentication
@@ -15,11 +14,12 @@ from django.db.models import Sum
 import csv
 from django.core.files.base import ContentFile
 from django.core.files.storage import FileSystemStorage
-fs = FileSystemStorage(location='/temp')
+fs = FileSystemStorage(location='/temp/KL')
 
-# authentication
-# models
 # Create your views here.
+
+
+
 
 # ---------------------------------------update-API-------------------------------------------------------
 
@@ -27,7 +27,7 @@ fs = FileSystemStorage(location='/temp')
 @api_view(['POST'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
-def update_db_AP(request):
+def update_db_KL(request):
     data = {}
     if request.user.designation == "Manager":
 
@@ -46,7 +46,7 @@ def update_db_AP(request):
             for row in reader:
                 date_str, region, regional_manager, head_quarter, business_executive, agency, product, billed_qty, billed_rate, company_value,financial_year = row
                 date_obj = datetime.datetime.strptime(date_str, '%m/%d/%Y')
-                product_list.append(sales_data_AP(
+                product_list.append(sales_data_KL(
                     Date=date_obj.date(),
                     Region=region,
                     Regional_manager=regional_manager,
@@ -60,7 +60,7 @@ def update_db_AP(request):
                     financial_year=financial_year,
                 ))
 
-            sales_data_AP.objects.bulk_create(product_list)
+            sales_data_KL.objects.bulk_create(product_list)
             data["status"] = "sucessfully uploaded"
         except Exception as e:
             print(e)
@@ -70,21 +70,23 @@ def update_db_AP(request):
     return Response(data)
 
 
+
 # -------------------------------------------Monthly-API-----------------------------------------------
 @api_view(['GET'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
-def AP_monthly(request):
+def KL_monthly(request):
     data = {}
     try:
-        queryset = sales_data_AP.objects.annotate(month=TruncMonth('Date')).values(
+        queryset = sales_data_KL.objects.annotate(month=TruncMonth('Date')).values(
             'month').annotate(total_sales=Sum('Company_value')).order_by('month')
-        serializer = AP_MonthlySerializer(queryset, many=True)
+        serializer = KL_MonthlySerializer(queryset, many=True)
         data["status"] = serializer.data
     except Exception as e:
         print(e)
         data["status"] = "Error"
     return Response(data)
+
 
 # -----------------------------------RM--BS-----API---------------------------------------------------
 
@@ -92,78 +94,66 @@ def AP_monthly(request):
 @api_view(['GET'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
-def AP_pie(request):
+def KL_pie(request):
     data = {}
     year = request.GET.get('year', None)
     if year == None:
         try:
-            queryset = sales_data_AP.objects.values('Business_executive').annotate(
+            queryset = sales_data_KL.objects.values('Business_executive').annotate(
                 total_sales=Sum("Company_value")).distinct()
-            serializer = APpieSerializer(queryset, many=True)
+            serializer = KLpieSerializer(queryset, many=True)
             data['status'] = serializer.data
         except Exception as e:
             print(e)
             data['status'] = "error"
     else:  
         try:
-            queryset = sales_data_AP.objects.filter(financial_year = year).values('Business_executive').annotate(
+            queryset = sales_data_KL.objects.filter(financial_year = year).values('Business_executive').annotate(
                 total_sales=Sum("Company_value")).distinct()
-            serializer = APpieSerializer(queryset, many=True)
+            serializer = KLpieSerializer(queryset, many=True)
             data['status'] = serializer.data
         except Exception as e:
             print(e)
             data['status'] = "error"      
     return Response(data)
 
-# @api_view(['GET'])
-# def sales_data_by_month(request):
-#     sales_data = sales_data_AP.objects.annotate(year=TruncYear('Date'), month=TruncMonth('Date')).values('year', 'month', 'Business_executive').annotate(total_sales=Sum('Company_value'))
-#     data_by_month = {}
 
-#     for row in sales_data:
 
-#         month = row['month'].strftime('%B')
-#         business_executive = row['Business_executive']
-#         total_sales = row['total_sales']
-#         year = row['year'].strftime('%Y')
-#         if year not in data_by_month:
-#             data_by_month[year] = {}
-#         if month not in data_by_month[year]:
-#             data_by_month[year][month] = {}
-#         data_by_month[year][month][business_executive] = total_sales
-#     return JsonResponse(data_by_month)
 # ---------------------------------------MAN--------------------------------------------------------------------
 
 
 @api_view(['GET'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
-def AP_Managers(request):
+def KL_Managers(request):
     data = {}
     try:
-        sales_data = sales_data_AP.objects.values(
+        sales_data = sales_data_KL.objects.values(
             'Regional_manager').distinct().order_by('Regional_manager')
 
         # print(sales_data)
-        serializer = AP_ReginalManSerializer(sales_data, many=True)
+        serializer = KL_ReginalManSerializer(sales_data, many=True)
         data['status'] = serializer.data
     except Exception as e:
         # print(e)
         data['status'] = "error"
     return Response(data)
 
+
+
+
 # ----------------------------MON & Year--------------------------------
 
 
 @api_view(['GET'])
-def AP_year_month(request):
+def KL_year_month(request):
     data = []
     try:
         year = request.GET.get('year', None)
         month = request.GET.get('month', None)
 
         month_number = datetime.datetime.strptime(month, '%B').month
-        queryset = sales_data_AP.objects.filter(Date__year=year, Date__month=month_number).values(
+        queryset = sales_data_KL.objects.filter(Date__year=year, Date__month=month_number).values(
             'Business_executive').annotate(sales=Sum('Company_value'))
         for item in queryset:
             data.append(
@@ -175,21 +165,22 @@ def AP_year_month(request):
     return Response(data)
 
 
+
 # ------------------------------------Unique----Products---------------------Ap-------------------------------\
 @api_view(['GET'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
-def AP_unique_pro(request):
+def KL_unique_pro(request):
     data = []
     try:
         year = request.GET.get('year', None)
         month = request.GET.get('month', None)
         if month == None or year == None:
-            qureyset = sales_data_AP.objects.values('Product').annotate(sales=Sum('Company_value'), TotalQty=Sum(
+            qureyset = sales_data_KL.objects.values('Product').annotate(sales=Sum('Company_value'), TotalQty=Sum(
                 "Billed_qty")).values('Product', "TotalQty", "sales").distinct().order_by('-TotalQty')
         else:
             month_number = datetime.datetime.strptime(month, '%B').month
-            qureyset = sales_data_AP.objects.filter(Date__year=year, Date__month=month_number).values('Product').annotate(sales=Sum(
+            qureyset = sales_data_KL.objects.filter(Date__year=year, Date__month=month_number).values('Product').annotate(sales=Sum(
                 'Company_value'), TotalQty=Sum("Billed_qty")).values('Product', "TotalQty", "sales").distinct().order_by('-TotalQty')
         for i in qureyset:
             data.append(i)
@@ -198,19 +189,21 @@ def AP_unique_pro(request):
 
     return Response(data)
 
+
+
 # ----------------------------------------Map---Cordinates----------------
 
 
 @api_view(['GET'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
-def AP_geolocation_view(request):
+def KL_geolocation_view(request):
     data = {}
     try:
-        queryset = AP_geolocation.objects.values(
+        queryset = KL_geolocation.objects.values(
             "Name", "Designation").distinct()
         for item in queryset:
-            queryset2 = AP_geolocation.objects.filter(Name=item['Name']).values(
+            queryset2 = KL_geolocation.objects.filter(Name=item['Name']).values(
                 'C_lat', 'C_lon', 'City', 'Designation', 'H_lat', 'H_lon', 'Head_quarters', 'P_lat', 'P_lon', 'Place', 'Type').distinct()
             # data[item['Name']] = list(queryset2)
             lis1 = []
@@ -227,20 +220,23 @@ def AP_geolocation_view(request):
     except Exception as e:
         data = ["error"]
     return Response(data)
+
+
+
 # --------------------------------AP_BE_SALES---------------------------------------------
 
 
 @api_view(['GET'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
-def Ap_BE_mon_sales(request):
+def KL_BE_mon_sales(request):
     res_data = {}
     test = []
     data = []
     try:
-        unique_BE = sales_data_AP.objects.values(
+        unique_BE = sales_data_KL.objects.values(
             'Business_executive').distinct()
-        queryset = sales_data_AP.objects.annotate(month=TruncMonth('Date')).values('month', 'Business_executive').annotate(
+        queryset = sales_data_KL.objects.annotate(month=TruncMonth('Date')).values('month', 'Business_executive').annotate(
             total_sales=Sum('Company_value')).values('month', 'Business_executive', 'total_sales').order_by('month')
         for date in queryset:
             if date['month'] not in data:
@@ -263,24 +259,26 @@ def Ap_BE_mon_sales(request):
     except Exception as e:
         print(e)
     return Response(res_data)
+
+
 #----------------------------------------delete---------------------------------------------
 
 @api_view(['GET'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
-def delete_AP_DataBase(request):
+def delete_KL_DataBase(request):
     data={}
     if request.user.designation == "Manager":
         financial_year =request.GET.get("fin-year",None)
         if financial_year == None:
             try:
-                sales_data_AP.objects.all().delete()
+                sales_data_KL.objects.all().delete()
                 data["status"]="succsess"
             except:
                 data["status"]="Failed to delete"
         else:
             try:
-                sales_data_AP.objects.filter(financial_year=financial_year).delete()
+                sales_data_KL.objects.filter(financial_year=financial_year).delete()
                 data["status"]="succsess"
             except:
                 data["status"]="Failed to delete"        
@@ -289,27 +287,13 @@ def delete_AP_DataBase(request):
     return Response(data)
 
 
-#-------------------------------------------------distinct-finantial-year----------
-@api_view(['GET'])
-@authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
-def AP_distinct_finacial_year(request):
-    data =[]
-    try:
-        queryset = sales_data_AP.objects.values('financial_year').distinct()
-        for i in queryset:
-            data.append(i['financial_year'])
-    except :
-        data=[]
-    return Response(data)
-            
 
 #----------------------------------------- Agency--Sales=-------------------------------------
 @api_view(['GET'])
-def AP_Agency_view(request):
+def KL_Agency_view(request):
     data = {}
     
-    queryset = sales_data_AP.objects.annotate(month=TruncMonth('Date')).values('month', 'Business_executive', 'Agency').distinct()
+    queryset = sales_data_KL.objects.annotate(month=TruncMonth('Date')).values('month', 'Business_executive', 'Agency').distinct()
     
     for entry in queryset:
         month = entry['month']
@@ -325,19 +309,37 @@ def AP_Agency_view(request):
         data[str(month)][business_executive].append(agency)
     
     return Response(data)
+
+
 # filtered result-----------------------
 
 @api_view(['GET'])
-def AP_agency_filtered_view(request):
+def KL_agency_filtered_view(request):
     data=[]
     month = request.GET.get('month',None)
     business_executive = request.GET.get('be',None)
     agency = request.GET.get('agency',None)
     if agency != None and business_executive != None and month != None:
         try:
-            queryset = sales_data_AP.objects.annotate(month=TruncMonth('Date')).filter(month=month,Business_executive=business_executive,Agency=agency).values('Date','Product','Billed_qty','Billed_rate')
+            queryset = sales_data_KL.objects.annotate(month=TruncMonth('Date')).filter(month=month,Business_executive=business_executive,Agency=agency).values('Date','Product','Billed_qty','Billed_rate')
             data=list(queryset)
         except Exception as e:
             print(e)
             data=[{e}]
     return Response(data)            
+
+
+
+#-------------------------------------------------distinct-finantial-year----------
+@api_view(['GET'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def KL_distinct_finacial_year(request):
+    data =[]
+    try:
+        queryset = sales_data_KL.objects.values('financial_year').distinct()
+        for i in queryset:
+            data.append(i['financial_year'])
+    except :
+        data=[]
+    return Response(data)
