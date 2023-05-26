@@ -265,7 +265,7 @@ def Ap_BE_mon_sales(request):
     return Response(res_data)
 #----------------------------------------delete---------------------------------------------
 
-@api_view(['GET'])
+@api_view(['DELETE'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def delete_AP_DataBase(request):

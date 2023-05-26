@@ -263,7 +263,7 @@ def KL_BE_mon_sales(request):
 
 #----------------------------------------delete---------------------------------------------
 
-@api_view(['GET'])
+@api_view(['DELETE'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def delete_KL_DataBase(request):
